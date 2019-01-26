@@ -3,6 +3,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const request = require("request");
+const keys = require('./dev');
 
 const app = express();
 
@@ -20,10 +21,47 @@ app.post("/", function(req, res) {
   var lastName = req.body.lName;
   var email = req.body.email;
 
-  console.log(firstName, lastName, email);
+  var data = {
+    members: [{
+      email_address: email,
+      status: "subscribed",
+      merge_fields: {
+        FNAME: firstName,
+        LNAME: lastName
+      }
+    }]
+  };
+
+  var jsonData = JSON.stringify(data);
+
+
+  var options = {
+    url: keys.myurl,
+    method: "POST",
+    headers: {
+      "Authorization": keys.myauth
+    },
+    body: jsonData
+  };
+
+  request(options, function(error, response, body) {
+    if (error) {
+      res.sendFile(__dirname + "/failure.html");
+    } else {
+      if (response.statusCode === 200) {
+        res.sendFile(__dirname + "/success.html");
+      } else {
+        res.sendFile(__dirname + "/failure.html");
+      }
+    }
+  });
+});
+
+app.post("/failure", function(req,res){
+  res.redirect("/");
 });
 
 
-app.listen(3000, function() {
+app.listen(process.env.PORT || 3000, function() {
   console.log("server is running on port 3000");
 });
